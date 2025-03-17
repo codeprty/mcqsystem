@@ -1,27 +1,38 @@
 package mcq;
 
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.util.*;
 
 public class CSVReader {
-    /** Reads a CSV file and returns a list of questions. */
-    public static List<Question> loadQuestions(String filePath) throws FileNotFoundException {
+	 // Reads a CSV file and returns a list of questions.
+    public static List<Question> loadQuestions(String filePath) {
         List<Question> questions = new ArrayList<>();
-        Scanner scanner = new Scanner(new File(filePath)); // Open the file for reading
+        
+        try (Scanner scanner = new Scanner(new File(filePath))) {
+            while (scanner.hasNextLine()) {
+                // Read and process each line, removing any unnecessary quotes
+                String[] parts = scanner.nextLine().replace("\"", "").split(",");
 
-        while (scanner.hasNextLine()) {
-            String[] parts = scanner.nextLine().replace("\"", "").split(","); // Remove quotes and split by comma
-            if (parts.length < 3) continue; // Ensure valid format with at least question, options, and answer
+                // Ensure the line has at least a question, options, and an answer
+                if (parts.length < 3) continue;
 
-            String questionText = parts[0].trim(); // Extract question text
-            List<String> options = new ArrayList<>(Arrays.asList(parts).subList(1, parts.length - 1)); // Extract options
-            String correctAnswer = parts[parts.length - 1].trim().toUpperCase(); // Extract and standardize correct answer(s)
+                // Extract question text
+                String questionText = parts[0].trim();
 
-            questions.add(new Question(questionText, options, correctAnswer)); // Create and add question object
+                // Extract answer options (excluding the last element, which is the correct answer)
+                List<String> options = new ArrayList<>(Arrays.asList(parts).subList(1, parts.length - 1));
+
+                // Extract correct answer(s), converting to uppercase for consistency
+                String correctAnswer = parts[parts.length - 1].trim().toUpperCase();
+
+                // Create a Question object and add it to the list
+                questions.add(new Question(questionText, options, correctAnswer));
+            }
+        } catch (Exception e) {
+            // Handle errors (e.g., file not found, incorrect format) gracefully
+            System.out.println("Error reading file: " + e.getMessage());
         }
 
-        scanner.close(); // Close file after reading
-        return questions;
+        return questions; // Return the list of parsed questions
     }
 }
